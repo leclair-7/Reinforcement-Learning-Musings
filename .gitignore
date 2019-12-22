@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+*.stupid
+
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
