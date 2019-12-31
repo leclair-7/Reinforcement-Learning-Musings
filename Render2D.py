@@ -4,20 +4,36 @@ takes in a numpy array and scales the screen display
 '''
 
 import pygame, sys
+
 from pygame.locals import *
 from MagicNumbers import *
+
+from HmiEventHandler import HmiEventHandler
 import numpy as np
+
+import pygame.sprite
+
 FPS = 30
 
 class Render:
-	def __init__(self, layer, showgrid=False, screendims=(640,480), caption="RL Renderer"):
-		self.grid = layer.grid
+	def __init__(self, layer, showgrid=False, screendims=(640,480), caption="RL Renderer", eventHandle = None):
+		
+		#possible input
+		# Event Handler --> function pointer?n
+		self.eventHandler = HmiEventHandler
+
+		self.grid = None
+		if not showgrid:
+			print("set this", screendims)
+			self.grid = np.zeros(screendims)
+		
 		self.agent_pos = [3,0]
 		self.grid[0][0] = 1
 		# change this when we start adding multiple layers
 		self.title = layer.name
 		self.showgrid = showgrid
 
+		
 		#initialize pygame modules
 		pygame.init()
 		#is this redundant?
@@ -32,6 +48,7 @@ class Render:
 
 		self.isinstanceRunning = True
 		self.pixelcord = [0,0]
+		self.agent_pos = np.array([250,250])
 		# gets the iamge surface, RL things!
 		#ScreenImage = pygame.surfarray.array3d(pygame.display.get_surface())
 
@@ -40,20 +57,28 @@ class Render:
 		# Resolve screen size with grid size
 		# May want boxes based on the smaller dimension 
 
-		width, height = self.size
-		numRow, numCol = self.grid.shape
-		rowHeight = height // numRow
-		colWidth = width // numCol
-		# draw horizontal row lines
-		for yCoord in range(0,height, rowHeight):
-			pygame.draw.line(self.screen, BLACK, (0,yCoord),(width, yCoord))
-		# draw verticle column lines
-		for xCoord in range(0, width, colWidth):
-			pygame.draw.line(self.screen, BLACK, (xCoord,0), (xCoord,height))
+		# start centerpoint, decide based on showgrid
+		centerPt = np.array([0,0])
 
-		#calculate center point to draw player
-		centerPt = [colWidth * self.agent_pos[1] + colWidth//2,rowHeight * self.agent_pos[0] + rowHeight//2]
-		self.pixelcord = centerPt
+		if self.showgrid:
+			width, height = self.size
+			numRow, numCol = self.grid.shape
+			rowHeight = height // numRow
+			colWidth = width // numCol
+			# draw horizontal row lines
+			for yCoord in range(0,height, rowHeight):
+				pygame.draw.line(self.screen, BLACK, (0,yCoord),(width, yCoord))
+			# draw verticle column lines
+			for xCoord in range(0, width, colWidth):
+				pygame.draw.line(self.screen, BLACK, (xCoord,0), (xCoord,height))
+
+			#calculate center point to draw player
+			centerPt = [colWidth * self.agent_pos[1] + colWidth//2,rowHeight * self.agent_pos[0] + rowHeight//2]
+			self.pixelcord = centerPt
+		else:
+			# pygame.draw.Rec
+			centerPt = self.agent_pos
+			pygame.draw.rect(self.screen, BLACK, [150, 10, 50, 20])
 		pygame.draw.circle(self.screen, BLUE, centerPt, 25)
 		pygame.display.flip()
 
@@ -61,6 +86,7 @@ class Render:
 		# rather than complex event management, we'll use this
 		# until we need a dedicated event manager
 		for event in pygame.event.get():
+			#self.eventHandle(event)
 			if event.type == QUIT:
 				self.Quit()
 			elif event.type == KEYDOWN:
@@ -87,10 +113,10 @@ class Render:
 						self.agent_pos[1] += 1
 				if event.key == K_q:
 					self.Quit()
-				self.grid = np.zeros(self.grid.shape)
-				self.grid[self.agent_pos[0]][self.agent_pos[1]] = 1
-				print(self.grid)
-				print( self.agent_pos, self.grid.shape, self.pixelcord )
+				#self.grid = np.zeros(self.grid.shape)
+				#self.grid[self.agent_pos[0]][self.agent_pos[1]] = 1
+				#print(self.grid)
+				#print( self.agent_pos, self.grid.shape, self.pixelcord )
 				
 		self.FPSCLOCK.tick(60)
 		self.display()

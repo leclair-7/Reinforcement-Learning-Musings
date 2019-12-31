@@ -8,13 +8,18 @@ Pi(s)
 import numpy as np
 
 from LayerUtils import *
+from MagicNumbers import *
 
 class Layer:
-	def __init__(self, grid = np.array([]), name="" ):
+	def __init__(self, grid = np.array([]), name="", defaultColor = (0,0,0) ):
 		self.grid = grid
 		if not len(name):
 			raise EmptyLayerName
 		self.name = name
+	def getColor(self):
+		return self.defaultColor
+	def setColor(self, color):
+		self.defaultColor = color
 
 if __name__=='__main__':
 	

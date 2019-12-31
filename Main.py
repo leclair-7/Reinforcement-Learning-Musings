@@ -1,6 +1,7 @@
 
 from Layers import  *
 from Render2D import Render
+from NaiveController import NaiveController
 
 if __name__=='__main__':
 	Q_init = np.zeros((4,3))
