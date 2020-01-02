@@ -2,6 +2,10 @@
 '''
 A Pygame based renderer
 takes in a numpy array and scales the screen display
+
+2D visibility calculation is thanks to:
+https://ncase.me/sight-and-light/
+
 '''
 '''
 class Balloon(pygame.sprite.Sprite):
@@ -106,7 +110,7 @@ def pointsToRectEdge(pos,edge1, edge2, testpoint ):
     # should be >= segment 1 and should be <= segment 2
 
     return lowerTest and upperTest
-
+idx = 0
 def display(showgrid=False, pos=[0,0]):
     # Resolve screen size with grid size
     # May want boxes based on the smaller dimension 
@@ -114,6 +118,9 @@ def display(showgrid=False, pos=[0,0]):
     screen.fill( WHITE )
     pos = (pos[0], pos[1])
     
+    #used to keep collision frame count
+    global idx
+
     # proves we can write pixels for viewshed on the 
     # game surface
     global aas
@@ -124,7 +131,7 @@ def display(showgrid=False, pos=[0,0]):
     q,w,e,r = [400, 100, 25, 250]
     a11,b11,c11,d11 = rectStartFinish(q,w,e,r)
     rect_init_coords = [400, 100, 25, 250]
-    a = pygame.draw.rect(screen, BLACK, rect_init_coords)
+    a = pygame.draw.rect(screen, GREY, rect_init_coords)
 
     # ToDo put an angled rectangle here (and make a function to do so)
     # maybe startpoint, thickness, angle, put in the rectangles array
@@ -134,14 +141,50 @@ def display(showgrid=False, pos=[0,0]):
     #very fragile, make robust for y == y case (for example)
     top = [a11,b11]
     bottom = [c11,d11]
+
+    # draw draws shapes on a surface
+    # assumes pos is WASD or arrow key controlled
+    # commented for 2D visibility functionality creation
+    '''
     pygame.draw.polygon(screen, LIGHTGREEN, (pos, top, bottom) )
     pygame.draw.line(screen, YELLOW, pos, top, 3)
     pygame.draw.line(screen, YELLOW, pos, bottom, 3)
+    '''
 
+    #getting mouse 
+    # rp - reference position
+    rp = np.array(SIZE)//2
+    reference_point = pygame.draw.circle(screen, RED, rp, 5)
+    
+    #2D Visibility calculation tests
+    w,h = SIZE
+    sc1 = ( (int(w*4/20), int(h*2/11)),
+                     (int(w*3/20), int(h*5/11)),
+                     (int(w*5/20), int(h*7/11)),
+                     (int(w*6/20), int(h*1/11)) 
+                    )
+    sc2 = ( (int(w*7/20), int(h*6/11)),
+                     (int(w*9/20), int(h*7/11)),
+                     (int(w*12/20), int(h*10/11)),
+                     (int(w*6/20), int(h*9/11)) 
+                    )
 
-    b = pygame.draw.circle(screen, BLUE, pos, 25)
-    if a.colliderect(b):
-        print("Denver we have a collision")
+    # looks like visibility will be done using colliderect?
+    rect2 = pygame.draw.polygon(screen, GREY, sc1, 1  )
+    rect3 = pygame.draw.polygon(screen, GREY, sc2, 1  )
+
+    rect_store = [a, rect2, rect3] 
+
+    pos = pygame.mouse.get_pos()
+    b = pygame.draw.circle(screen, BLUE, pos, 5)
+    
+    pygame.draw.line(screen, BLUE, pos, rp, 3)
+
+    for game_wall in rect_store:
+        if b.colliderect(game_wall):
+            idx += 1
+            print("Denver we have a collision", idx)
+
     pygame.display.flip()
     return a, b
 

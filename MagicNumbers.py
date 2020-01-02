@@ -6,6 +6,7 @@ Magic Numbers go here
 FPS = 30
 
 BLACK = (0, 0, 0)
+GREY = (190, 190, 190)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 LIGHTGREEN = (9,187,85)
