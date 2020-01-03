@@ -26,7 +26,9 @@ from MagicNumbers import *
 import numpy as np
 import pygame.sprite
 
-FPS = 60
+from math import sin, cos, sqrt, atan2, isclose, pi
+
+FPS = 30
 
 
 SIZE = (640,480)
@@ -158,33 +160,97 @@ def display(showgrid=False, pos=[0,0]):
     
     #2D Visibility calculation tests
     w,h = SIZE
-    sc1 = ( (int(w*4/20), int(h*2/11)),
+    mapPolyLineSeg = ( (int(w*4/20), int(h*2/11)),
                      (int(w*3/20), int(h*5/11)),
                      (int(w*5/20), int(h*7/11)),
-                     (int(w*6/20), int(h*1/11)) 
-                    )
-    sc2 = ( (int(w*7/20), int(h*6/11)),
+                     (int(w*6/20), int(h*1/11)),
+                     (int(w*7/20), int(h*6/11)),
                      (int(w*9/20), int(h*7/11)),
                      (int(w*12/20), int(h*10/11)),
                      (int(w*6/20), int(h*9/11)) 
                     )
+    lines_arr = []
+    shapeSegPts = []
+    for i in range(len(mapPolyLineSeg)):
+        line, lineSeg = None, None 
+        if i %4 == 3:
+            lineSeg = [mapPolyLineSeg[i],  mapPolyLineSeg[i-3] ]
+            line = pygame.draw.line(screen, GREY,mapPolyLineSeg[i], mapPolyLineSeg[i-3] ,1)
+        else:
+            lineSeg = [mapPolyLineSeg[i],  mapPolyLineSeg[i+1] ]
+            line = pygame.draw.line(screen, GREY,mapPolyLineSeg[i], mapPolyLineSeg[i+1] ,1 )
+        lines_arr.append(line)
+        shapeSegPts.append(lineSeg)
 
-    # looks like visibility will be done using colliderect?
-    rect2 = pygame.draw.polygon(screen, GREY, sc1, 1  )
-    rect3 = pygame.draw.polygon(screen, GREY, sc2, 1  )
-
-    rect_store = [a, rect2, rect3] 
-
+    # 1get ray x,y 
     pos = pygame.mouse.get_pos()
     b = pygame.draw.circle(screen, BLUE, pos, 5)
-    
-    pygame.draw.line(screen, BLUE, pos, rp, 3)
+    # rp - reference map position
+    r_px, r_py = rp
+    # theta is between mouse pos and the reference position
+    theta = atan2( (pos[1] - r_py), (pos[0] - r_px) )
+    r_dx = cos(theta)
+    r_dy = sin(theta)
+    T1 =  sqrt( (pos[0] - r_px)**2 + (pos[1] - r_py)**2)
 
+    #angle_deg = theta * 180/pi
+    #print("Angle in deg: ", angle_deg)
+    print(pos)
+    # 2 loop through all segment points, get segment x,y
+    anX, anY = rp
+    dot = [r_px + r_dx * T1, r_py + r_dy * T1]
+    lowestT1 = T1
+    for i in shapeSegPts:
+        dst, src = i[0], i[1]
+        s_px, s_py = src
+        beta = atan2( (dst[1]-src[1]),(dst[0]-src[0]) )
+        s_dx = cos(beta)
+        s_dy = sin(beta)
+
+        # check for parallel lines, placeholder
+        if False:
+            pass
+        # otherwise, we have an intersection
+        else:
+            T2 = (r_dx*(s_py-r_py) + r_dy*(r_px-s_px))/(s_dx*r_dy - s_dy*r_dx)
+            T1 = (s_px+s_dx*T2-r_px)/r_dx
+            #print(T1, T2)
+            if T1 < 0:
+                continue
+            if (T2 < 0 or T2 > 1):
+                continue
+            #Intersection
+            idx += 1
+            print("Intersection found!!!", idx)
+            #lowestT1 = min(T1, lowe cstT1)
+            if abs(T1) < abs(lowestT1):
+                lowestT1 = T1
+    dot = [r_px + r_dx * lowestT1, r_py + r_dy * lowestT1]
+    dot = [min(SIZE[0], dot[0]), min(SIZE[1], dot[1])]
+    dot = list(map(int, dot))
+    #print("rp", rp, "dot", dot)
+    pygame.draw.line(screen, GREEN, rp, dot, 1 )
+
+    #solve for T1, T2
+
+
+    # 3 parallel check make sure they're r_dx != s_dx and r_dy != s_dy
+    # 4 solve for T1, and T2, and do the intersection calculation
+
+    # looks like visibility will be done using colliderect?
+    #rect2 = pygame.draw.polygon(screen, GREY, sc1, 1  )
+    #rect3 = pygame.draw.polygon(screen, GREY, sc2, 1  )
+
+    rect_store = [a] 
+
+    
+    #pygame.draw.line(screen, BLUE, pos, rp, 3)
+    '''
     for game_wall in rect_store:
         if b.colliderect(game_wall):
             idx += 1
             print("Denver we have a collision", idx)
-
+    '''
     pygame.display.flip()
     return a, b
 
