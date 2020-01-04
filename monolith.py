@@ -70,89 +70,64 @@ def rectStartFinish(px, py, width, height):
         h = [px, py, px + width, py]
     return h
 
-def pointsToRectEdge(pos,edge1, edge2, testpoint ):
-
-    '''
-    2 Things we need for this:
-        - angle from the pos to edge value to color the coords to it
-        - line from pos to edge
-            a. we'll loop from minx, miny to maxx, maxy
-
-    # stupid line thing:
-    posx, posy ------- ex, ey
-    suppose
-    0,4 -- 4,0
-    y-y1 = m(x-x1)
-
-    y = -1/4x + 4
-
-    y-4= m(x-0)
-    m = (y2-y1)/x2-x1
-    y = mx - mx1 + y1
-    y = -1/4x + 0 + 4 
-
-    1 >= -1/4 * 1 + 4 (which is False)
-    '''
-
-    #edge1 is bottom, edge2 is the top
-    assert( edge1[1] < edge2[1])
-    x,y = pos
-    e1x,e1y = edge1
-    e2x,e2y = edge2
-    mPosToE1 = (e1y-y)/(e1x-x)
-    mPosToE2 = (e2y-y)/(e2x-x)
-    m1, b1 = mPosToE1, (mPosToE1 * x + y)
-    m2, b2 = mPosToE2, (mPosToE2 * x + y)
-
-    assert( len(testpoint) == 2)
-    tx, ty = testpoint
-
-    lowerTest = ty >= mPosToE1 * tx + b1
-    upperTest = ty <= mPosToE2 * tx + b2
-    # should be >= segment 1 and should be <= segment 2
-
-    return lowerTest and upperTest
 idx = 0
+
+class Point:
+    def __init__(self, ax, ay, T1=0):
+        self.x = ax
+        self.y = ay
+        self.T1 = T1
+class Ray:
+    def __init__(self, a,b):
+        #a is the reference position, b is mouse position
+        self.a = Point(a[0], a[1])
+        self.b = Point(b[0], b[1])
+
+
+def getIntersection(ray, segment):
+    point = None
+
+    r_px = ray.a.x 
+    r_py = ray.a.y
+    r_dx = ray.b.x - ray.a.x
+    r_dy = ray.b.y - ray.a.y
+    
+    s_px = segment.a.x
+    s_py = segment.a.y
+    s_dx = segment.b.x - segment.a.x
+    s_dy = segment.b.y - segment.a.y
+
+    r_mag = sqrt(r_dx * r_dx + r_dy * r_dy)
+    s_mag = sqrt(s_dx * s_dx + s_dy * s_dy)
+
+    if (r_dx/r_mag==s_dx/s_mag and r_dy/s_mag==s_dy/s_mag):
+        return None
+    T2 = (r_dx*(s_py-r_py) + r_dy*(r_px-s_px))/(s_dx*r_dy - s_dy*r_dx)
+    T1 = (s_px+s_dx*T2-r_px)/r_dx
+    
+    if T1<0:
+        return None
+    if T2 < 0 or T2 > 1:
+        return None
+    return Point(r_px+r_dx*T1,r_py+r_dy*T1,T1)
+
+
+
+    return point
 def display(showgrid=False, pos=[0,0]):
     # Resolve screen size with grid size
     # May want boxes based on the smaller dimension 
     # start centerpoint, decide based on showgrid
     screen.fill( WHITE )
-    pos = (pos[0], pos[1])
     
     #used to keep collision frame count
     global idx
-
-    # proves we can write pixels for viewshed on the 
-    # game surface
-    global aas
-    if not aas:
-        aas = True
-        #print(dir(screen))
-
+    
     q,w,e,r = [400, 100, 25, 250]
     a11,b11,c11,d11 = rectStartFinish(q,w,e,r)
     rect_init_coords = [400, 100, 25, 250]
     a = pygame.draw.rect(screen, GREY, rect_init_coords)
-
-    # ToDo put an angled rectangle here (and make a function to do so)
-    # maybe startpoint, thickness, angle, put in the rectangles array
-    #
-    # a = pygame.draw.polygon(screen, BLACK, (()  ) )
-
-    #very fragile, make robust for y == y case (for example)
-    top = [a11,b11]
-    bottom = [c11,d11]
-
-    # draw draws shapes on a surface
-    # assumes pos is WASD or arrow key controlled
-    # commented for 2D visibility functionality creation
-    '''
-    pygame.draw.polygon(screen, LIGHTGREEN, (pos, top, bottom) )
-    pygame.draw.line(screen, YELLOW, pos, top, 3)
-    pygame.draw.line(screen, YELLOW, pos, bottom, 3)
-    '''
-
+    
     #getting mouse 
     # rp - reference position
     rp = np.array(SIZE)//2
@@ -171,31 +146,52 @@ def display(showgrid=False, pos=[0,0]):
                     )
     lines_arr = []
     shapeSegPts = []
+    segments = []
     for i in range(len(mapPolyLineSeg)):
         line, lineSeg = None, None 
         if i %4 == 3:
             lineSeg = [mapPolyLineSeg[i],  mapPolyLineSeg[i-3] ]
             line = pygame.draw.line(screen, GREY,mapPolyLineSeg[i], mapPolyLineSeg[i-3] ,1)
+            segments.append(Ray(mapPolyLineSeg[i], mapPolyLineSeg[i-3]))
         else:
             lineSeg = [mapPolyLineSeg[i],  mapPolyLineSeg[i+1] ]
             line = pygame.draw.line(screen, GREY,mapPolyLineSeg[i], mapPolyLineSeg[i+1] ,1 )
+            segments.append(Ray(mapPolyLineSeg[i], mapPolyLineSeg[i+1]))
         lines_arr.append(line)
         shapeSegPts.append(lineSeg)
 
-    # 1get ray x,y 
+    # 1 get ray x,y 
     pos = pygame.mouse.get_pos()
-    b = pygame.draw.circle(screen, BLUE, pos, 5)
+    b = pygame.draw.circle(screen, BLUE, pos, 4)
+
+    ray = Ray(rp, pos)
     # rp - reference map position
-    r_px, r_py = rp
+
+    closestIntersect = None
+    for segment in segments:
+        intersect =  getIntersection(ray, segment)
+        if not intersect:    
+            continue
+        if (not closestIntersect or intersect.T1 < closestIntersect.T1):
+            closestIntersect = intersect
+
+    if closestIntersect:
+        pygame.draw.line(screen, GREEN, rp, (int(closestIntersect.x), int(closestIntersect.y)), 1 )
+    else:
+        pygame.draw.line(screen, GREEN, rp, pos, 1 )
+        
+
     # theta is between mouse pos and the reference position
+    '''
     theta = atan2( (pos[1] - r_py), (pos[0] - r_px) )
     r_dx = cos(theta)
     r_dy = sin(theta)
     T1 =  sqrt( (pos[0] - r_px)**2 + (pos[1] - r_py)**2)
-
-    #angle_deg = theta * 180/pi
-    #print("Angle in deg: ", angle_deg)
-    print(pos)
+    '''
+    '''
+    angle_deg = theta * 180/pi
+    print("Angle in deg: ", angle_deg)
+    #print(pos )
     # 2 loop through all segment points, get segment x,y
     anX, anY = rp
     dot = [r_px + r_dx * T1, r_py + r_dy * T1]
@@ -228,22 +224,12 @@ def display(showgrid=False, pos=[0,0]):
     dot = [r_px + r_dx * lowestT1, r_py + r_dy * lowestT1]
     dot = [min(SIZE[0], dot[0]), min(SIZE[1], dot[1])]
     dot = list(map(int, dot))
-    #print("rp", rp, "dot", dot)
-    pygame.draw.line(screen, GREEN, rp, dot, 1 )
+    '''
+    #pygame.draw.line(screen, GREEN, rp, dot, 1 )
 
     #solve for T1, T2
 
-
-    # 3 parallel check make sure they're r_dx != s_dx and r_dy != s_dy
-    # 4 solve for T1, and T2, and do the intersection calculation
-
-    # looks like visibility will be done using colliderect?
-    #rect2 = pygame.draw.polygon(screen, GREY, sc1, 1  )
-    #rect3 = pygame.draw.polygon(screen, GREY, sc2, 1  )
-
-    rect_store = [a] 
-
-    
+    rect_store = [a]     
     #pygame.draw.line(screen, BLUE, pos, rp, 3)
     '''
     for game_wall in rect_store:
