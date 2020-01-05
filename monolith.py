@@ -62,14 +62,17 @@ class Point:
         self.x = ax
         self.y = ay
         self.T1 = T1
+    def __str__(self):
+        return "Point: " + str(self.x) + " " + str(self.y)
 class Ray:
     def __init__(self, a,b):
         #a is the reference position, b is mouse position
         self.a = Point(a[0], a[1])
         self.b = Point(b[0], b[1])
+    def __str__(self):
+        return "Point a: (" + str(self.a.x)+ ", " + str(self.a.y) + ") " + \
+               "Point b: (" + str(self.b.x)+ ", " + str(self.b.y) + ") "
 def getIntersection(ray, segment):
-    point = None
-
     r_px = ray.a.x 
     r_py = ray.a.y
     r_dx = ray.b.x - ray.a.x
@@ -85,6 +88,9 @@ def getIntersection(ray, segment):
 
     if (r_dx/r_mag==s_dx/s_mag and r_dy/s_mag==s_dy/s_mag):
         return None
+    if isclose( (s_dx*r_dy - s_dy*r_dx),0) or isclose(r_dx, 0):
+        return None
+
     T2 = (r_dx*(s_py-r_py) + r_dy*(r_px-s_px))/(s_dx*r_dy - s_dy*r_dx)
     T1 = (s_px+s_dx*T2-r_px)/r_dx
     
@@ -136,22 +142,36 @@ def display(showgrid=False, pos=[0,0]):
     b = pygame.draw.circle(screen, BLUE, pos, 4)
 
     #center screen to mouse position
-    ray = Ray(rp, pos)
-    
-    closestIntersect = None
+    #ray = Ray(rp, pos)
+    MPosToCornerRays = []
     for segment in segments:
-        intersect =  getIntersection(ray, segment)
-        if not intersect:    
-            continue
-        if (not closestIntersect or intersect.T1 < closestIntersect.T1):
-            closestIntersect = intersect
+        for seg in [segment.a, segment.b]:
+            MPosToCornerRays.append( Ray(pos, (seg.x, seg.y) ) )
 
+    LinePoints = []
+    for ray in MPosToCornerRays:
+        closestIntersect = None
+        for segment in segments:
+            intersect =  getIntersection(ray, segment)
+            if not intersect:    
+                continue
+            if (not closestIntersect or intersect.T1 < closestIntersect.T1):
+                closestIntersect = intersect
+        if closestIntersect:
+            LinePoints.append([ pos ,(int(closestIntersect.x), int(closestIntersect.y))])
+        else:
+            LinePoints.append([ pos , (ray.b.x, ray.b.y) ])
+
+    for lp in LinePoints:
+        pygame.draw.line(screen, GREEN, lp[0], lp[1], 1)
+    '''    
     if closestIntersect:
         pygame.draw.line(screen, GREEN, rp, (int(closestIntersect.x), int(closestIntersect.y)), 1 )
     else:
         pygame.draw.line(screen, GREEN, rp, pos, 1 )
-        
-    rect_store = [a]     
+    '''
+
+    #rect_store = [a]     
     #pygame.draw.line(screen, BLUE, pos, rp, 3)
     '''
     for game_wall in rect_store:
