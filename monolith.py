@@ -125,15 +125,18 @@ def display(showgrid=False, pos=[0,0]):
     segments = []
     #draw all line segments
     for i in range(len(mapPolyLineSeg)):
+        line = None
         if i %4 == 3:
+            line = pygame.draw.line(screen, GREY,mapPolyLineSeg[i], mapPolyLineSeg[i-3] ,1)
             segments.append(Ray(mapPolyLineSeg[i], mapPolyLineSeg[i-3]))
         else:
+            line = pygame.draw.line(screen, GREY,mapPolyLineSeg[i], mapPolyLineSeg[i+1] ,1 )
             segments.append(Ray(mapPolyLineSeg[i], mapPolyLineSeg[i+1]))
     pos = pygame.mouse.get_pos()
     b = pygame.draw.circle(screen, BLUE, pos, 4)
 
     #center screen to mouse position
-    #ray = Ray(rp, pos)
+    ray = Ray(rp, pos)
     
     closestIntersect = None
     for segment in segments:
