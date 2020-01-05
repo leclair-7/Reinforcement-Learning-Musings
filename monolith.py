@@ -1,23 +1,9 @@
-
 '''
-A Pygame based renderer
+A Pygame based testing for new features of the game
 takes in a numpy array and scales the screen display
 
 2D visibility calculation is thanks to:
 https://ncase.me/sight-and-light/
-
-'''
-'''
-class Balloon(pygame.sprite.Sprite):
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self) #call Sprite initializer
-        self.image, self.rect = pygame.image.load("balloon.png")
-        self.mask = pygame.mask.from_surface(self.image)
-b1 = Balloon()
-b2 = Balloon()
-
-if pygame.sprite.spritecollide(b1, b2, False, pygame.sprite.collide_mask):
-    print("sprites have collided!")
 '''
 
 import pygame, sys
@@ -70,7 +56,6 @@ def rectStartFinish(px, py, width, height):
         h = [px, py, px + width, py]
     return h
 
-idx = 0
 
 class Point:
     def __init__(self, ax, ay, T1=0):
@@ -82,8 +67,6 @@ class Ray:
         #a is the reference position, b is mouse position
         self.a = Point(a[0], a[1])
         self.b = Point(b[0], b[1])
-
-
 def getIntersection(ray, segment):
     point = None
 
@@ -110,25 +93,20 @@ def getIntersection(ray, segment):
     if T2 < 0 or T2 > 1:
         return None
     return Point(r_px+r_dx*T1,r_py+r_dy*T1,T1)
-
-
-
-    return point
 def display(showgrid=False, pos=[0,0]):
     # Resolve screen size with grid size
     # May want boxes based on the smaller dimension 
     # start centerpoint, decide based on showgrid
     screen.fill( WHITE )
     
-    #used to keep collision frame count
-    global idx
+    #used to keep collision frame count    
+    idx = 0
     
     q,w,e,r = [400, 100, 25, 250]
     a11,b11,c11,d11 = rectStartFinish(q,w,e,r)
     rect_init_coords = [400, 100, 25, 250]
     a = pygame.draw.rect(screen, GREY, rect_init_coords)
     
-    #getting mouse 
     # rp - reference position
     rp = np.array(SIZE)//2
     reference_point = pygame.draw.circle(screen, RED, rp, 5)
@@ -144,29 +122,19 @@ def display(showgrid=False, pos=[0,0]):
                      (int(w*12/20), int(h*10/11)),
                      (int(w*6/20), int(h*9/11)) 
                     )
-    lines_arr = []
-    shapeSegPts = []
     segments = []
+    #draw all line segments
     for i in range(len(mapPolyLineSeg)):
-        line, lineSeg = None, None 
         if i %4 == 3:
-            lineSeg = [mapPolyLineSeg[i],  mapPolyLineSeg[i-3] ]
-            line = pygame.draw.line(screen, GREY,mapPolyLineSeg[i], mapPolyLineSeg[i-3] ,1)
             segments.append(Ray(mapPolyLineSeg[i], mapPolyLineSeg[i-3]))
         else:
-            lineSeg = [mapPolyLineSeg[i],  mapPolyLineSeg[i+1] ]
-            line = pygame.draw.line(screen, GREY,mapPolyLineSeg[i], mapPolyLineSeg[i+1] ,1 )
             segments.append(Ray(mapPolyLineSeg[i], mapPolyLineSeg[i+1]))
-        lines_arr.append(line)
-        shapeSegPts.append(lineSeg)
-
-    # 1 get ray x,y 
     pos = pygame.mouse.get_pos()
     b = pygame.draw.circle(screen, BLUE, pos, 4)
 
-    ray = Ray(rp, pos)
-    # rp - reference map position
-
+    #center screen to mouse position
+    #ray = Ray(rp, pos)
+    
     closestIntersect = None
     for segment in segments:
         intersect =  getIntersection(ray, segment)
@@ -180,55 +148,6 @@ def display(showgrid=False, pos=[0,0]):
     else:
         pygame.draw.line(screen, GREEN, rp, pos, 1 )
         
-
-    # theta is between mouse pos and the reference position
-    '''
-    theta = atan2( (pos[1] - r_py), (pos[0] - r_px) )
-    r_dx = cos(theta)
-    r_dy = sin(theta)
-    T1 =  sqrt( (pos[0] - r_px)**2 + (pos[1] - r_py)**2)
-    '''
-    '''
-    angle_deg = theta * 180/pi
-    print("Angle in deg: ", angle_deg)
-    #print(pos )
-    # 2 loop through all segment points, get segment x,y
-    anX, anY = rp
-    dot = [r_px + r_dx * T1, r_py + r_dy * T1]
-    lowestT1 = T1
-    for i in shapeSegPts:
-        dst, src = i[0], i[1]
-        s_px, s_py = src
-        beta = atan2( (dst[1]-src[1]),(dst[0]-src[0]) )
-        s_dx = cos(beta)
-        s_dy = sin(beta)
-
-        # check for parallel lines, placeholder
-        if False:
-            pass
-        # otherwise, we have an intersection
-        else:
-            T2 = (r_dx*(s_py-r_py) + r_dy*(r_px-s_px))/(s_dx*r_dy - s_dy*r_dx)
-            T1 = (s_px+s_dx*T2-r_px)/r_dx
-            #print(T1, T2)
-            if T1 < 0:
-                continue
-            if (T2 < 0 or T2 > 1):
-                continue
-            #Intersection
-            idx += 1
-            print("Intersection found!!!", idx)
-            #lowestT1 = min(T1, lowe cstT1)
-            if abs(T1) < abs(lowestT1):
-                lowestT1 = T1
-    dot = [r_px + r_dx * lowestT1, r_py + r_dy * lowestT1]
-    dot = [min(SIZE[0], dot[0]), min(SIZE[1], dot[1])]
-    dot = list(map(int, dot))
-    '''
-    #pygame.draw.line(screen, GREEN, rp, dot, 1 )
-
-    #solve for T1, T2
-
     rect_store = [a]     
     #pygame.draw.line(screen, BLUE, pos, rp, 3)
     '''
