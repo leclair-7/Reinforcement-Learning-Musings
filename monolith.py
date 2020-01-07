@@ -16,12 +16,9 @@ from math import sin, cos, sqrt, atan2, isclose, pi
 
 FPS = 30
 
-
 SIZE = (640,480)
-grid = np.zeros(SIZE)
-
 # change this when we start adding multiple layers
-title = "Scene"
+title = "Test Scene"
 
 #initialize pygame modules
 pygame.init()
@@ -35,14 +32,9 @@ hitsurf = font.render("Hit!!! Oops!!", 1, (255,255,255))
 screen = pygame.display.set_mode(SIZE)
 pygame.display.set_caption(title)
 
-# gets the iamge surface, RL things!
+# gets the image surface, RL things!
 #ScreenImage = pygame.surfarray.array3d(pygame.display.get_surface())
-pos = np.array( [ 100, 100 ])
 
-# for masks
-last_bx, last_by = 0,0
-
-aas = False
 def Quit():
     pygame.display.quit()
     pygame.quit()
@@ -55,13 +47,12 @@ def rectStartFinish(px, py, width, height):
     else:
         h = [px, py, px + width, py]
     return h
-
-
 class Point:
-    def __init__(self, ax, ay, T1=0):
+    def __init__(self, ax, ay, angle = 0, T1=0):
         self.x = ax
         self.y = ay
         self.T1 = T1
+        self.angle = angle
     def __str__(self):
         return "Point: " + str(self.x) + " " + str(self.y)
 class Ray:
@@ -72,6 +63,11 @@ class Ray:
     def __str__(self):
         return "Point a: (" + str(self.a.x)+ ", " + str(self.a.y) + ") " + \
                "Point b: (" + str(self.b.x)+ ", " + str(self.b.y) + ") "
+class LinePointAndAngle:
+    def __init__(self, lp0, lp1):
+        self.lp0 = lp0
+        self.lp1 = lp1
+        self.angle = atan2(lp1[1]-lp0[1], lp1[0] - lp1[0])
 def getIntersection(ray, segment):
     r_px = ray.a.x 
     r_py = ray.a.y
@@ -98,24 +94,18 @@ def getIntersection(ray, segment):
         return None
     if T2 < 0 or T2 > 1:
         return None
-    return Point(r_px+r_dx*T1,r_py+r_dy*T1,T1)
+    aPx, aPy = r_px+r_dx*T1,r_py+r_dy*T1
+    angle = atan2( aPy - r_py, aPx - r_px)
+    return Point(r_px+r_dx*T1,r_py+r_dy*T1,angle,T1)
 def display(showgrid=False, pos=[0,0]):
-    # Resolve screen size with grid size
-    # May want boxes based on the smaller dimension 
-    # start centerpoint, decide based on showgrid
+    '''
+    A test function for visualization features
+    The intent is to test features that will become agent layers here 
+    '''
     screen.fill( WHITE )
-    
-    #used to keep collision frame count    
-    idx = 0
-    
-    q,w,e,r = [400, 100, 25, 250]
-    a11,b11,c11,d11 = rectStartFinish(q,w,e,r)
-    rect_init_coords = [400, 100, 25, 250]
-    a = pygame.draw.rect(screen, GREY, rect_init_coords)
     
     # rp - reference position
     rp = np.array(SIZE)//2
-    reference_point = pygame.draw.circle(screen, RED, rp, 5)
     
     #2D Visibility calculation tests
     w,h = SIZE
@@ -129,7 +119,7 @@ def display(showgrid=False, pos=[0,0]):
                      (int(w*6/20), int(h*9/11)) 
                     )
     segments = []
-    #draw all line segments
+    #draw all line segments for the shapes/polygons
     for i in range(len(mapPolyLineSeg)):
         line = None
         if i %4 == 3:
@@ -141,12 +131,18 @@ def display(showgrid=False, pos=[0,0]):
     pos = pygame.mouse.get_pos()
     b = pygame.draw.circle(screen, BLUE, pos, 4)
 
-    #center screen to mouse position
-    #ray = Ray(rp, pos)
     MPosToCornerRays = []
+    uniquePoints = []
     for segment in segments:
         for seg in [segment.a, segment.b]:
             MPosToCornerRays.append( Ray(pos, (seg.x, seg.y) ) )
+            uniquePoints.append( (seg.x, seg.y) )
+    # project this to either closest edge or to the edge of the screen
+    uniquePoints = list(set(uniquePoints))
+    uniqueAngles = []
+    for pt in uniquePoints:
+        angle = atan2( pt[1] - pos[1], pt[0] - pos[0])
+        uniqueAngles.extend( (angle - 0.00001, angle, angle + 0.00001) )
 
     LinePoints = []
     for ray in MPosToCornerRays:
@@ -161,32 +157,17 @@ def display(showgrid=False, pos=[0,0]):
             LinePoints.append([ pos ,(int(closestIntersect.x), int(closestIntersect.y))])
         else:
             LinePoints.append([ pos , (ray.b.x, ray.b.y) ])
-
     for lp in LinePoints:
-        pygame.draw.line(screen, GREEN, lp[0], lp[1], 1)
-    '''    
-    if closestIntersect:
-        pygame.draw.line(screen, GREEN, rp, (int(closestIntersect.x), int(closestIntersect.y)), 1 )
-    else:
-        pygame.draw.line(screen, GREEN, rp, pos, 1 )
-    '''
-
-    #rect_store = [a]     
-    #pygame.draw.line(screen, BLUE, pos, rp, 3)
-    '''
-    for game_wall in rect_store:
-        if b.colliderect(game_wall):
-            idx += 1
-            print("Denver we have a collision", idx)
-    '''
+        pygame.draw.line(screen, GREEN, lp[0], lp[1], 1)     
+    
     pygame.display.flip()
-    return a, b
+    return b
 
 vx, vy = 5, 5
 aPrev, bPrev = None, None
 if __name__=='__main__':
     # rather than complex event management, we'll use this
-    # until we need a dedicated event manager
+    # until we need a dedicated event manager, then we'll despair
     while True:
         for event in pygame.event.get():
             #self.eventHandle(event)
@@ -211,7 +192,7 @@ if __name__=='__main__':
         pos[1] = spritey
 
         # a is rectangle, b is circle for position
-        a, b = display(pos=pos)
-        aPrev, bPrev = a, b
+        b = display(pos=pos)
+        
 
         FPSCLOCK.tick(FPS)
