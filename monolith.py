@@ -132,11 +132,11 @@ def draw_static_shapes():
         line = pygame.draw.line(screen, GREY, border[i], border[i+1], 1)
         segments.append(Ray(border[i], border[i+1]) )
     pos = pygame.mouse.get_pos()
-    b = pygame.draw.circle(screen, BLUE, pos, 4)
+    pygame.draw.circle(screen, BLUE, pos, 4)
 
     segPts = [i for i in mapPolyLineSeg]
     segPts.extend([i for i in border])
-    return segments, pos, b, border, segPts
+    return segPts, pos, segments
 def display(showgrid=False, pos=[0,0]):
     '''
     A test function for visualization features
@@ -144,21 +144,17 @@ def display(showgrid=False, pos=[0,0]):
     '''
     screen.fill( WHITE )
     
-    center_screen = np.array(SIZE)//2
-    # rp - reference position
-    rp = center_screen
+    segPts, pos, segments = draw_static_shapes()
     
-    segments, pos, b, border, segPts = draw_static_shapes()
-    
-    incrementsOf50 = []
+    mousePosToShapeEdges = []
     for i in segPts:
         angle = atan2(i[1]-pos[1], i[0]-pos[0])
-        incrementsOf50.append(angle)
-        incrementsOf50.append(angle+.0001)
-        incrementsOf50.append(angle-.0001)
-    incrementsOf50.sort()
+        mousePosToShapeEdges.append(angle)
+        mousePosToShapeEdges.append(angle+.0001)
+        mousePosToShapeEdges.append(angle-.0001)
+    mousePosToShapeEdges.sort()
     intersects = []
-    for angle in incrementsOf50:
+    for angle in mousePosToShapeEdges:
         dx = cos(angle)
         dy = sin(angle)
         ray = Ray(pos, [pos[0] + dx, pos[1] + dy])
@@ -176,9 +172,19 @@ def display(showgrid=False, pos=[0,0]):
             pt = intersect.asIntTuple()
             pygame.draw.line(screen,RED,pos, pt, 1)
 
+    for i in range(len(intersects)-1):
+        if intersects[i] and intersects[i+1]:
+            pt = intersects[i].asIntTuple()
+            pt2 = intersects[i+1].asIntTuple()
+            #print(pt, pt2, pos)
+            pygame.draw.polygon(screen, RED, [pt, pt2, pos])
+            pygame.draw.polygon(screen, GREY, [pt, pt2, pos], 1)
+    pt = intersects[-1].asIntTuple()
+    pt2 = intersects[0].asIntTuple()        
+    pygame.draw.polygon(screen, RED, [pt, pt2, pos])
+    pygame.draw.polygon(screen, GREY, [pt, pt2, pos],1)
 
     pygame.display.flip()
-    return b
 
 vx, vy = 5, 5
 aPrev, bPrev = None, None
