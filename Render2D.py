@@ -8,7 +8,6 @@ import pygame, sys
 from pygame.locals import *
 from MagicNumbers import *
 
-from HmiEventHandler import HmiEventHandler
 import numpy as np
 
 import pygame.sprite
