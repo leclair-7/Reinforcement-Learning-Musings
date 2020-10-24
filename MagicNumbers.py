@@ -4,6 +4,10 @@ Magic Numbers go here
 
 #may need to be lower for training
 FPS = 30
+WIDTH, HEIGHT = 840,480
+SIZE = (WIDTH, HEIGHT)
+GRID_ROWS, GRID_COLS = 4,4
+GRID_DIMS = (GRID_ROWS, GRID_COLS)
 
 BLACK = (0, 0, 0)
 GREY = (190, 190, 190)
