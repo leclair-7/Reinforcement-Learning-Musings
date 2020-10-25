@@ -13,19 +13,7 @@ import numpy as np
 import pygame.sprite
 import argparse
 from math import sin, cos, sqrt, atan2, isclose, pi
-
-#initialize pygame modules
-pygame.init()
-#is this redundant?
-pygame.font.init()
-
-FPSCLOCK = pygame.time.Clock()
-font = pygame.font.SysFont('arial', 20)
-hitsurf = font.render("Hit!!! Oops!!", 1, (255,255,255))
-
-screen = pygame.display.set_mode(SIZE)
-title = "Control, then switch controllers via argparse"
-pygame.display.set_caption(title)
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--showgrid",help="represent game map as a grid such as 4x4", action='store_true')
@@ -42,6 +30,48 @@ gamemap = np.zeros(GRID_DIMS)
 costmap = np.zeros(GRID_DIMS)
 horizontal_block_step = WIDTH // GRID_DIMS[0]
 vertical_block_step = HEIGHT // GRID_DIMS[1]
+
+
+goalpt = [WIDTH*.75,HEIGHT*.75]
+goalpt = list(map(int,goalpt))
+
+W = 0
+S = 1
+G = 2
+F = 3
+
+TileColor = { W : BLUE,
+              S : SANDYYELLOW,
+              G : GRASSGREEN,
+              F : FORESTGREEN
+             }
+
+TILESIZE = 40
+tilemap = np.random.random( GRID_DIMS )
+colorChoice = [W,S,G,F,W]
+multiplier_prob = 1 / len(colorChoice)
+for i,v in enumerate(colorChoice):
+    tilemap= np.where( (tilemap< ( multiplier_prob * (i+1))), colorChoice[i],tilemap)
+print(tilemap)
+
+
+#initialize pygame modules
+pygame.init()
+#is this redundant?
+pygame.font.init()
+
+FPSCLOCK = pygame.time.Clock()
+font = pygame.font.SysFont('arial', 20)
+hitsurf = font.render("Hit!!! Oops!!", 1, (255,255,255))
+
+screen = None
+if showgrid:
+    screen = pygame.display.set_mode(SIZE)
+else:
+    screen = pygame.display.set_mode(( GRID_DIMS[0]*TILESIZE , GRID_DIMS[1]*TILESIZE ))
+title = "Control, then switch controllers via argparse"
+pygame.display.set_caption(title)
+
 
 if showgrid:
     horizontal_block_step = WIDTH // GRID_DIMS[0]
@@ -69,8 +99,6 @@ def display(pos,showgrid=False):
     The intent is to test features that will become agent layers here 
     '''
     screen.fill( WHITE )
-    
-        
 
     # if we passed show grid on initialization
     #GRID_DIMS
@@ -91,6 +119,12 @@ def display(pos,showgrid=False):
             endpt = [i * idx_multiplier,HEIGHT]
             pygame.draw.line(screen, BLUE, startpt,endpt, 1)
         pygame.draw.line(screen, BLUE, [WIDTH,0],[WIDTH,HEIGHT], 4)
+    else:
+        for row in range(GRID_DIMS[0]):
+            for col in range(GRID_DIMS[1]):
+                pygame.draw.rect(screen,TileColor[tilemap[row][col]], (col*TILESIZE,row*TILESIZE,TILESIZE,TILESIZE) )
+    pygame.draw.circle(screen,GREEN,goalpt,6)
+    
     if showgrid and PosInMap(pos):
         pospx = [horizontal_block_step * pos[0] + horiz_half_step,vertical_block_step * pos[1] + vert_half_step] 
         print(pospx)
@@ -100,6 +134,8 @@ def display(pos,showgrid=False):
         pygame.draw.circle(screen,RED,pospx,4)
     else:
         print("pos not in map")
+
+
     '''    
     pygame.draw.polygon(screen, RED, [pt, pt2, pos])
     pygame.draw.polygon(screen, GREY, [pt, pt2, pos],1)
