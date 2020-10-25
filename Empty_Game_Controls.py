@@ -183,6 +183,10 @@ if __name__=='__main__':
                 velx, vely = 0,0
         keys_pressed = pygame.key.get_pressed()
         
+
+        if len(moves)>0:
+            pos += moves.pop()
+
         if keys_pressed[K_ESCAPE]:
             Quit()
         HandleHmiMovementKeyPress(keys_pressed, pos,showgrid)

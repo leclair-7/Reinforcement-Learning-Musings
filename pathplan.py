@@ -93,7 +93,7 @@ def generatePathToGoalPt(aGameMap,aStartPt,aGoalPt):
     
     start = Node(None,aStartPt)
     start.g = start.h = start.f = 0
-    
+    start.move = np.array([0,0]) 
     goal = Node(None,aGoalPt)
     goal.g = goal.h = goal.f = 0
 
