@@ -15,6 +15,8 @@ import argparse
 from math import sin, cos, sqrt, atan2, isclose, pi
 import sys
 
+import pathplan as plan
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--showgrid",help="represent game map as a grid such as 4x4", action='store_true')
 args = parser.parse_args()
@@ -25,17 +27,17 @@ showgrid = args.showgrid
 Change settings; set vars based on args
 '''
 vx, vy = 1, 1
-pos = [0,0]
-gamemap = np.zeros(GRID_DIMS)
+pos = np.array([0,0])
+gamemap = np.ones(GRID_DIMS)
 costmap = np.zeros(GRID_DIMS)
 horizontal_block_step = WIDTH // GRID_DIMS[0]
 vertical_block_step = HEIGHT // GRID_DIMS[1]
 
+goalpt = np.array([8,8])
 
-goalpt = [WIDTH*.75,HEIGHT*.75]
-goalpt = list(map(int,goalpt))
+checkpath,moves = plan.generatePathToGoalPt(gamemap,pos,goalpt)
 
-W = 0
+W = 0 
 S = 1
 G = 2
 F = 3
@@ -52,12 +54,10 @@ colorChoice = [W,S,G,F,W]
 multiplier_prob = 1 / len(colorChoice)
 for i,v in enumerate(colorChoice):
     tilemap= np.where( (tilemap< ( multiplier_prob * (i+1))), colorChoice[i],tilemap)
-print(tilemap)
-
+#print(tilemap)
 
 #initialize pygame modules
 pygame.init()
-#is this redundant?
 pygame.font.init()
 
 FPSCLOCK = pygame.time.Clock()
@@ -78,14 +78,20 @@ if showgrid:
     vertical_block_step = HEIGHT // GRID_DIMS[1]
     #vx,vy = horizontal_block_step, vertical_block_step
     horiz_half_step, vert_half_step = int(horizontal_block_step * .5), int(vertical_block_step * .5)
+elif not showgrid:
+    print("not showgrid")
+    horizontal_block_step = (GRID_DIMS[0] * TILESIZE) // GRID_DIMS[0]
+    vertical_block_step = (GRID_DIMS[1] * TILESIZE) // GRID_DIMS[1]
+    #vx,vy = horizontal_block_step, vertical_block_step
+    horiz_half_step, vert_half_step = int(horizontal_block_step * .5), int(vertical_block_step * .5)
 else:
+    # keeping a simple debug setting
     vx,vy = 5,5
 def Quit():
     pygame.display.quit()
     pygame.quit()
     sys.exit()
 def PosInMap(pos,showgrid=False,grid_dims=None):
-    
     if showgrid:
         if pos[0] < 0 or pos[0] >= grid_dims[0] or pos[1] < 0 or pos[1] >= grid_dims[1]:
             return False
@@ -123,14 +129,20 @@ def display(pos,showgrid=False):
         for row in range(GRID_DIMS[0]):
             for col in range(GRID_DIMS[1]):
                 pygame.draw.rect(screen,TileColor[tilemap[row][col]], (col*TILESIZE,row*TILESIZE,TILESIZE,TILESIZE) )
-    pygame.draw.circle(screen,GREEN,goalpt,6)
     
+    for rbox in checkpath:
+        pygame.draw.rect(screen,LIGHTBLUE,(rbox[0] *TILESIZE,rbox[1]*TILESIZE,TILESIZE,TILESIZE))
+
+    goalptpx = [horizontal_block_step * goalpt[0] + horiz_half_step, vertical_block_step * goalpt[1] + vert_half_step]
+    print(goalptpx)
+    pygame.draw.circle(screen,BLACK,goalptpx,6)
+     
+    #print(horizontal_block_step, vertical_block_step,pos)
     if showgrid and PosInMap(pos):
         pospx = [horizontal_block_step * pos[0] + horiz_half_step,vertical_block_step * pos[1] + vert_half_step] 
-        print(pospx)
         pygame.draw.circle(screen,RED,pospx,4)
     elif PosInMap(pos):
-        pospx = pos
+        pospx = [horizontal_block_step * pos[0] + horiz_half_step,vertical_block_step * pos[1] + vert_half_step] 
         pygame.draw.circle(screen,RED,pospx,4)
     else:
         print("pos not in map")
@@ -176,7 +188,6 @@ if __name__=='__main__':
         HandleHmiMovementKeyPress(keys_pressed, pos,showgrid)
                 
         #it gets covered by the 2-D visibility
-        
         # a is rectangle, b is circle for position
         b = display(pos,showgrid)
         #print(pos)
