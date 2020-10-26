@@ -1,8 +1,11 @@
 
 import random 
 
-class NaiveController:
+class RandomController:
 	def __init__(self, actions = None):
-		self.actions = actions
+            self.actions = actions
+            self.actionTranslator = None
 	def GetNextAction(self):
-		return random.choice(self.actions)
+            if self.actionTranslator:
+                return random.choice(self.actionTranslator.values())
+            return random.choice(self.actions)
