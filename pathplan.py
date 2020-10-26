@@ -30,7 +30,7 @@ action_to_coordChange = {
 
 gamemap = np.ones((10,10))
 startpos = np.array([1,1])
-goalpos = np.array([7,7])
+goalpos = np.array([7,4])
 
 gamemap[4:9,4]=99
 gamemap[4,4:8]=99
@@ -122,7 +122,8 @@ def generatePathToGoalPt(aGameMap,aStartPt,aGoalPt):
                 path.append(current.position)
                 moves.append(current.move)
                 current = current.parent
-            return path[::-1],moves[::-1]
+            print("not reversing moves so pop() executes on the agent path")
+            return path[::-1],moves
         
         children = generateFrontier(aGameMap, current_node)
         #for i in children:

@@ -33,9 +33,16 @@ costmap = np.zeros(GRID_DIMS)
 horizontal_block_step = WIDTH // GRID_DIMS[0]
 vertical_block_step = HEIGHT // GRID_DIMS[1]
 
-goalpt = np.array([8,8])
+goalpt = np.array([8,4])
 
 checkpath,moves = plan.generatePathToGoalPt(gamemap,pos,goalpt)
+
+#print("startpt")
+#print(pos)
+#print("checkpath")
+#print(checkpath)
+#print("Moves")
+#print(moves)
 
 W = 0 
 S = 1
@@ -134,7 +141,7 @@ def display(pos,showgrid=False):
         pygame.draw.rect(screen,LIGHTBLUE,(rbox[0] *TILESIZE,rbox[1]*TILESIZE,TILESIZE,TILESIZE))
 
     goalptpx = [horizontal_block_step * goalpt[0] + horiz_half_step, vertical_block_step * goalpt[1] + vert_half_step]
-    print(goalptpx)
+    #print(goalptpx)
     pygame.draw.circle(screen,BLACK,goalptpx,6)
      
     #print(horizontal_block_step, vertical_block_step,pos)
@@ -171,6 +178,7 @@ def HandleHmiMovementKeyPress(keys_pressed, pos,showgrid):
         if PosInMap(tentative_next_pos,showgrid, GRID_DIMS):
             pos[1] += vy
 if __name__=='__main__':
+   
     
     while True:
         for event in pygame.event.get():
@@ -183,10 +191,14 @@ if __name__=='__main__':
                 velx, vely = 0,0
         keys_pressed = pygame.key.get_pressed()
         
-
+        #print("pre pos ", pos)
         if len(moves)>0:
-            pos += moves.pop()
-
+            curr_move = moves.pop()
+            #print("moving by", curr_move)
+            pos += curr_move
+            #print("result pos ", pos)
+            #print()
+        #print(pos)
         if keys_pressed[K_ESCAPE]:
             Quit()
         HandleHmiMovementKeyPress(keys_pressed, pos,showgrid)
