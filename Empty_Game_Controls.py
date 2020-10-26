@@ -71,6 +71,10 @@ FPSCLOCK = pygame.time.Clock()
 font = pygame.font.SysFont('arial', 20)
 hitsurf = font.render("Hit!!! Oops!!", 1, (255,255,255))
 
+
+button = pygame.Rect(100,100,50,50)
+
+
 screen = None
 if showgrid:
     screen = pygame.display.set_mode(SIZE)
@@ -154,7 +158,7 @@ def display(pos,showgrid=False):
     else:
         print("pos not in map")
 
-
+    pygame.draw.rect(screen, [255, 0, 0], button)
     '''    
     pygame.draw.polygon(screen, RED, [pt, pt2, pos])
     pygame.draw.polygon(screen, GREY, [pt, pt2, pos],1)
@@ -189,6 +193,10 @@ if __name__=='__main__':
                     Quit()
             elif event.type == KEYUP:
                 velx, vely = 0,0
+            elif event.type == MOUSEBUTTONDOWN:
+                mousepos = event.pos
+                if button.collidepoint(mousepos):
+                    print("collided")
         keys_pressed = pygame.key.get_pressed()
         
         #print("pre pos ", pos)
