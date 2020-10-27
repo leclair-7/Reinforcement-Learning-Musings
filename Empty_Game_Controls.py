@@ -14,6 +14,7 @@ import pygame.sprite
 import argparse
 from math import sin, cos, sqrt, atan2, isclose, pi
 import sys
+import Agent as agent
 
 import pathplan as plan
 
@@ -26,23 +27,10 @@ showgrid = args.showgrid
 '''
 Change settings; set vars based on args
 '''
-vx, vy = 1, 1
-pos = np.array([0,0])
 gamemap = np.ones(GRID_DIMS)
 costmap = np.zeros(GRID_DIMS)
 horizontal_block_step = WIDTH // GRID_DIMS[0]
 vertical_block_step = HEIGHT // GRID_DIMS[1]
-
-goalpt = np.array([8,4])
-
-checkpath,moves = plan.generatePathToGoalPt(gamemap,pos,goalpt)
-
-#print("startpt")
-#print(pos)
-#print("checkpath")
-#print(checkpath)
-#print("Moves")
-#print(moves)
 
 W = 0 
 S = 1
@@ -72,8 +60,7 @@ font = pygame.font.SysFont('arial', 20)
 hitsurf = font.render("Hit!!! Oops!!", 1, (255,255,255))
 
 
-button = pygame.Rect(100,100,50,50)
-
+button = pygame.Rect(int(.1*WIDTH),int(.8*HEIGHT),100,50)
 
 screen = None
 if showgrid:
@@ -110,7 +97,7 @@ def PosInMap(pos,showgrid=False,grid_dims=None):
         return False
     return True
 
-def display(pos,showgrid=False):
+def display(robot,showgrid=False):
     '''
     A test function for visualization features
     The intent is to test features that will become agent layers here 
@@ -137,33 +124,29 @@ def display(pos,showgrid=False):
             pygame.draw.line(screen, BLUE, startpt,endpt, 1)
         pygame.draw.line(screen, BLUE, [WIDTH,0],[WIDTH,HEIGHT], 4)
     else:
+        #color tiles
         for row in range(GRID_DIMS[0]):
             for col in range(GRID_DIMS[1]):
                 pygame.draw.rect(screen,TileColor[tilemap[row][col]], (col*TILESIZE,row*TILESIZE,TILESIZE,TILESIZE) )
     
-    for rbox in checkpath:
-        pygame.draw.rect(screen,LIGHTBLUE,(rbox[0] *TILESIZE,rbox[1]*TILESIZE,TILESIZE,TILESIZE))
+    if robot.path != None:
+        for rbox in robot.path:
+            pygame.draw.rect(screen,LIGHTBLUE,(rbox[0] *TILESIZE,rbox[1]*TILESIZE,TILESIZE,TILESIZE))
 
     goalptpx = [horizontal_block_step * goalpt[0] + horiz_half_step, vertical_block_step * goalpt[1] + vert_half_step]
     #print(goalptpx)
     pygame.draw.circle(screen,BLACK,goalptpx,6)
      
     #print(horizontal_block_step, vertical_block_step,pos)
-    if showgrid and PosInMap(pos):
-        pospx = [horizontal_block_step * pos[0] + horiz_half_step,vertical_block_step * pos[1] + vert_half_step] 
-        pygame.draw.circle(screen,RED,pospx,4)
-    elif PosInMap(pos):
-        pospx = [horizontal_block_step * pos[0] + horiz_half_step,vertical_block_step * pos[1] + vert_half_step] 
+    if PosInMap(robot.pos):
+        pospx = [horizontal_block_step * robot.pos[0] + horiz_half_step,vertical_block_step * robot.pos[1] + vert_half_step] 
         pygame.draw.circle(screen,RED,pospx,4)
     else:
         print("pos not in map")
 
     pygame.draw.rect(screen, [255, 0, 0], button)
-    '''    
-    pygame.draw.polygon(screen, RED, [pt, pt2, pos])
-    pygame.draw.polygon(screen, GREY, [pt, pt2, pos],1)
-    '''
     pygame.display.flip()
+
 def HandleHmiMovementKeyPress(keys_pressed, pos,showgrid):
     if keys_pressed[K_LEFT] or keys_pressed[K_a]:
         tentative_next_pos = [pos[0]-vx,pos[1]]
@@ -181,8 +164,15 @@ def HandleHmiMovementKeyPress(keys_pressed, pos,showgrid):
         tentative_next_pos = [pos[0],pos[1]+vy]
         if PosInMap(tentative_next_pos,showgrid, GRID_DIMS):
             pos[1] += vy
+
 if __name__=='__main__':
    
+    #default velocity, more often than not it's number of graph fields per key press
+    vx, vy = 1, 1
+    robot = agent.Agent(np.array([0,0]),{})
+    goalpt = np.array([8,4])
+    checkpath,moves = plan.generatePathToGoalPt(gamemap,robot.pos,goalpt)
+    robot.setPath(checkpath,moves)
     
     while True:
         for event in pygame.event.get():
@@ -191,28 +181,19 @@ if __name__=='__main__':
             elif event.type == KEYDOWN:                
                 if event.key == K_q:
                     Quit()
-            elif event.type == KEYUP:
-                velx, vely = 0,0
             elif event.type == MOUSEBUTTONDOWN:
                 mousepos = event.pos
                 if button.collidepoint(mousepos):
                     print("collided")
         keys_pressed = pygame.key.get_pressed()
-        
-        #print("pre pos ", pos)
-        if len(moves)>0:
-            curr_move = moves.pop()
-            #print("moving by", curr_move)
-            pos += curr_move
-            #print("result pos ", pos)
-            #print()
-        #print(pos)
         if keys_pressed[K_ESCAPE]:
             Quit()
-        HandleHmiMovementKeyPress(keys_pressed, pos,showgrid)
+        
+        robot.run_step() 
+        HandleHmiMovementKeyPress(keys_pressed, robot.pos,showgrid)
                 
         #it gets covered by the 2-D visibility
         # a is rectangle, b is circle for position
-        b = display(pos,showgrid)
+        b = display(robot,showgrid)
         #print(pos)
         FPSCLOCK.tick(FPS)
