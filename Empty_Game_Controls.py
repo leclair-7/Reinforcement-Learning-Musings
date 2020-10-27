@@ -60,13 +60,15 @@ font = pygame.font.SysFont('arial', 20)
 hitsurf = font.render("Hit!!! Oops!!", 1, (255,255,255))
 
 
-button = pygame.Rect(int(.1*WIDTH),int(.8*HEIGHT),100,50)
+button = pygame.Rect(int(.1*WIDTH),int(.8*HEIGHT),200,50)
 
 screen = None
 if showgrid:
     screen = pygame.display.set_mode(SIZE)
 else:
-    screen = pygame.display.set_mode(( GRID_DIMS[0]*TILESIZE , GRID_DIMS[1]*TILESIZE ))
+    WIDTH = GRID_DIMS[0]*TILESIZE  
+    HEIGHT = GRID_DIMS[1]*TILESIZE  
+    screen = pygame.display.set_mode((WIDTH,HEIGHT))
 title = "Control, then switch controllers via argparse"
 pygame.display.set_caption(title)
 
@@ -143,8 +145,22 @@ def display(robot,showgrid=False):
         pygame.draw.circle(screen,RED,pospx,4)
     else:
         print("pos not in map")
-
+    
     pygame.draw.rect(screen, [255, 0, 0], button)
+    
+    font = pygame.font.Font(None, 25)
+    
+    smallText = pygame.font.Font("freesansbold.ttf",20)
+    textSurf = font.render("Select Layer", True, BLACK)
+    textRect = textSurf.get_rect()
+    textRect.center = ( (int(.1*WIDTH)+(200//2)), (int(.8*HEIGHT)+(50//2)) )
+    screen.blit(textSurf, textRect)
+    '''
+    text = font.render("You win!", True, BLACK)
+    text_rect = text.get_rect(center=(int(.1*WIDTH) + 150//2 ,int(.8*HEIGHT) + 50//2 ))
+    text_rect.center = (
+    screen.blit(text, text_rect)
+    '''
     pygame.display.flip()
 
 def HandleHmiMovementKeyPress(keys_pressed, pos,showgrid):

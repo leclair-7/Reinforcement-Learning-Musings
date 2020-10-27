@@ -3,7 +3,7 @@ Magic Numbers go here
 '''
 
 #may need to be lower for training
-FPS = 10
+FPS = 5
 WIDTH, HEIGHT = 840,480
 SIZE = (WIDTH, HEIGHT)
 GRID_ROWS, GRID_COLS = 12,12
