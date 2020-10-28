@@ -95,7 +95,7 @@ def PosInMap(pos,showgrid=False,grid_dims=None):
     if showgrid:
         if pos[0] < 0 or pos[0] >= grid_dims[0] or pos[1] < 0 or pos[1] >= grid_dims[1]:
             return False
-    elif pos[0] < 0 or pos[0] > WIDTH or pos[1] < 0 or pos[1] > HEIGHT:
+    elif pos[0] < 0 or pos[0] >= grid_dims[0] or pos[1] < 0 or pos[1] >= grid_dims[1]:
         return False
     return True
 
@@ -140,7 +140,7 @@ def display(robot,showgrid=False):
     pygame.draw.circle(screen,BLACK,goalptpx,6)
      
     #print(horizontal_block_step, vertical_block_step,pos)
-    if PosInMap(robot.pos):
+    if PosInMap(robot.pos,False,GRID_DIMS):
         pospx = [horizontal_block_step * robot.pos[0] + horiz_half_step,vertical_block_step * robot.pos[1] + vert_half_step] 
         pygame.draw.circle(screen,RED,pospx,4)
     else:
@@ -155,12 +155,7 @@ def display(robot,showgrid=False):
     textRect = textSurf.get_rect()
     textRect.center = ( (int(.1*WIDTH)+(200//2)), (int(.8*HEIGHT)+(50//2)) )
     screen.blit(textSurf, textRect)
-    '''
-    text = font.render("You win!", True, BLACK)
-    text_rect = text.get_rect(center=(int(.1*WIDTH) + 150//2 ,int(.8*HEIGHT) + 50//2 ))
-    text_rect.center = (
-    screen.blit(text, text_rect)
-    '''
+
     pygame.display.flip()
 
 def HandleHmiMovementKeyPress(keys_pressed, pos,showgrid):
@@ -185,9 +180,16 @@ if __name__=='__main__':
    
     #default velocity, more often than not it's number of graph fields per key press
     vx, vy = 1, 1
-    robot = agent.Agent(np.array([0,0]),{})
+    robot = agent.Agent(np.array([0,0]),{},gamemap)
     goalpt = np.array([8,4])
     checkpath,moves = plan.generatePathToGoalPt(gamemap,robot.pos,goalpt)
+    moves.insert(0,[1,0])
+    moves.insert(0,[1,0])
+    moves.insert(0,[1,0])
+    moves.insert(0,[1,0])
+    moves.insert(0,[1,0])
+    moves.insert(0,[1,0])
+    moves.insert(0,[1,0])
     robot.setPath(checkpath,moves)
     
     while True:
@@ -206,10 +208,11 @@ if __name__=='__main__':
             Quit()
         
         robot.run_step() 
+        
         HandleHmiMovementKeyPress(keys_pressed, robot.pos,showgrid)
                 
         #it gets covered by the 2-D visibility
         # a is rectangle, b is circle for position
         b = display(robot,showgrid)
-        #print(pos)
+        print(robot.pos)
         FPSCLOCK.tick(FPS)
