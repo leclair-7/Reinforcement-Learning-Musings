@@ -26,6 +26,8 @@ def load_image(path):
     'load an image from the data directory with per pixel alpha transparency.'
     return pygame.image.load(path).convert_alpha()
 
+
+
 class SpaceShip(pygame.sprite.Sprite):
     def __init__(self,pos):
         pygame.sprite.Sprite.__init__(self)
@@ -84,9 +86,9 @@ def PosInMap(pos,gamemap):
     return True
 def HandleHmiMovementKeyPress(keys_pressed, ship):
     if keys_pressed[K_LEFT] or keys_pressed[K_a]:
-        ship.rotate(-5)
-    if keys_pressed[K_RIGHT] or keys_pressed[K_d]:
         ship.rotate(5)
+    if keys_pressed[K_RIGHT] or keys_pressed[K_d]:
+        ship.rotate(-5)
     if keys_pressed[K_UP] or keys_pressed[K_w]:
         ship.move(1)
     if keys_pressed[K_DOWN] or keys_pressed[K_s]:
