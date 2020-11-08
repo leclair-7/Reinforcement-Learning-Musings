@@ -80,6 +80,47 @@ class SpaceShip(pygame.sprite.Sprite):
             self.yaw -= self.yaw_change
         self.yaw = (self.yaw) % 360
         
+class Bullet(pygame.sprite.Sprite):
+    """ This class represents the bullet . """
+    def __init__(self,angle):
+        # Call the parent class (Sprite) constructor
+        super().__init__()
+ 
+        self.image = pygame.Surface([4, 10]).convert_alpha()
+        self.original_image = self.image
+        self.image.fill(BLACK)
+ 
+        self.rect = self.image.get_rect()
+        
+        self.velocity = 3
+        self.yaw = angle + 90
+        self.mask = pygame.mask.from_surface(self.image)
+    def update(self):
+        """ Move the bullet. """
+        yawRad = math.radians(self.yaw)
+        self.rect.y -= int(self.velocity * math.sin(yawRad))
+        self.rect.x += int(self.velocity * math.cos(yawRad))
+        
+        self.rotate_rect()
+    
+    def rotate_rect(self):
+        self.image = pygame.transform.rotozoom(self.original_image, self.yaw-90,1)
+        self.rect =  self.image.get_rect(center = self.rect.center)
+
+class Block(pygame.sprite.Sprite):
+    """ This class represents the block. """
+    def __init__(self, color):
+        # Call the parent class (Sprite) constructor
+        super().__init__()
+
+        self.image = pygame.Surface([20, 15]).convert_alpha()
+        self.image.fill(color)
+
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+
+
+
 def PosInMap(pos,gamemap):
     if pos[0] < 0 or pos [0] > gamemap[0] or pos[1] < 0 or pos[1] > gamemap[1]:
         return False
@@ -93,27 +134,73 @@ def HandleHmiMovementKeyPress(keys_pressed, ship):
         ship.move(1)
     if keys_pressed[K_DOWN] or keys_pressed[K_s]:
         ship.move(-1)
+
+
+
+# --- Sprite lists
+# This is a list of every sprite. All blocks and the player block as well.
+all_sprites_list = pygame.sprite.Group()
+ 
+# List of each block in the game
+block_list = pygame.sprite.Group()
+ 
+# List of each bullet
+bullet_list = pygame.sprite.Group()
+
+pos = [screen_width//2,int(.8*(screen_height)) ]
+player = SpaceShip(pos)
+all_sprites_list.add(player)
+
+
+for i in range(50):
+    # This represents a block
+    block = Block(BLUE)
+
+    # Set a random location for the block
+    block.rect.x = random.randrange(screen_width)
+    block.rect.y = random.randrange(350)
+
+    # Add the block to the list of objects
+    block_list.add(block)
+    all_sprites_list.add(block)
+
 done = False
-pos = [screen_width//2,screen_height//2]
-vx,vy = 5,5
-ship = SpaceShip(pos)
-sprites = pygame.sprite.RenderPlain(ship)
 while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: # If user clicked close
             done=True
-        if event.type == KEYDOWN:
+        elif event.type == KEYDOWN:
             if event.key == K_q:
                 done = True
+        elif event.type == MOUSEBUTTONDOWN:
+            bullet=Bullet(player.yaw)
+            bullet.rect.x = player.rect.centerx
+            bullet.rect.y = player.rect.centery
+            all_sprites_list.add(bullet)
+            bullet_list.add(bullet)
     keysPressed = pygame.key.get_pressed()
-    HandleHmiMovementKeyPress(keysPressed, ship)
-    #ship.setPos(pos)
+    HandleHmiMovementKeyPress(keysPressed, player)
 
+    
+    all_sprites_list.update() 
+    
+    for bullet in bullet_list:
+        block_hit_list = pygame.sprite.spritecollide(bullet,block_list,True,pygame.sprite.collide_mask)
+        for block in block_hit_list:
+            bullet_list.remove(bullet)
+            all_sprites_list.remove(bullet)
+
+        if bullet.rect.y < -10:
+            bullet_list.remove(bullet)
+            all_sprites_list.remove(bullet)
+    
+    
+    #clear screen
     screen.fill(WHITE)
-    pygame.draw.circle(screen,BLUE,pos,6)
-    ship.update()
-    sprites.draw(screen)
-    print(ship.yaw)
+
+    all_sprites_list.draw(screen)
+    
+    #update the screen 
     pygame.display.flip()
     clock.tick(20)
 
