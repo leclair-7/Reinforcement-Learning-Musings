@@ -8,35 +8,6 @@ http://csis.pace.edu/~benjamin/teaching/cs627/webfiles/Astar.pdf
 https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
 '''
 
-moves = np.array(
-        [
-            [0,-1],
-            [0,1],
-            [-1,0],
-            [1,0]
-        ]
-            )
-
-action_to_coordChange = {
-        # up
-        (1,0,0,0): [0 ,-1],
-        #down
-        (0,1,0,0): [0 ,1],
-        #left
-        (0,0,1,0): [-1 ,0],
-        #right
-        (0,0,0,1): [1 , 0]
-        }
-
-gamemap = np.ones((10,10))
-startpos = np.array([1,1])
-goalpos = np.array([7,4])
-
-gamemap[4:9,4]=99
-gamemap[4,4:8]=99
-
-moveCmd = (0,0,1,0)
-
 def IsInMap(aGameMap, aPos):
    w,h = aGameMap.shape
    if aPos[0] < 0 or aPos[0] >= w or aPos[1] < 0 or aPos[1] >= h:
@@ -64,14 +35,15 @@ class Node:
         self.h = 0
     def __eq__(self,other):
         return list(self.position) == list(other.position)
-
+    def __str__(self):
+        return "["+str(self.position[0]) + "," + str(self.position[1]) + "]"
 def HDistance(aGameMap,aStartPt,aGoalPt):
     '''
     Heuristic Distance, Manhattan Distance
     '''
     return (aGoalPt[1] - aStartPt[1])**2 + (aGoalPt[0] - aStartPt[0])**2
 
-def generateFrontier(aGameMap, aPos):
+def generateFrontier(aGameMap, aPos,moves):
     '''
     generates points around current point on the map
     '''
@@ -91,6 +63,14 @@ def generatePathToGoalPt(aGameMap,aStartPt,aGoalPt):
     if not IsInMap(aGameMap,aGoalPt):
         return -1
     
+    moves = np.array(
+            [
+                [0,-1],
+                [0,1],
+                [-1,0],
+                [1,0]
+            ]
+                )
     start = Node(None,aStartPt)
     start.g = start.h = start.f = 0
     start.move = np.array([0,0]) 
@@ -124,8 +104,9 @@ def generatePathToGoalPt(aGameMap,aStartPt,aGoalPt):
                 current = current.parent
             print("not reversing moves so pop() executes on the agent path")
             return path[::-1],moves
-        
-        children = generateFrontier(aGameMap, current_node)
+        #print("aGameMap", aGameMap)
+        #print("current_node", current_node)
+        children = generateFrontier(aGameMap, current_node,moves)
         #for i in children:
         #    print(i.position)
         #sys.exit(0)
@@ -149,14 +130,33 @@ def generatePathToGoalPt(aGameMap,aStartPt,aGoalPt):
             if openNodeFlag:
                 continue
             open_list.append(child)
-    return -1
+    return -1,-1
 
 if __name__=='__main__':
-    astarpath,moves = generatePathToGoalPt(gamemap,startpos,goalpos)
+    moves = np.array(
+            [
+                [0,-1],
+                [0,1],
+                [-1,0],
+                [1,0]
+            ]
+                )
 
+    gamemap = np.ones((10,10))
+    startpos = np.array([1,1])
+    goalpos = np.array([8,8])
+
+    gamemap[4:9,4]=99
+    gamemap[4,4:8]=99
+
+    astarpath,moves = generatePathToGoalPt(gamemap,startpos,goalpos)
     done_map = np.zeros_like(gamemap)
-    for i in astarpath:
-        done_map[i[0]][i[1]] = 4
-    #print(done_map)
+    
+    if astarpath == -1:
+        print("no path, check inputs")
+    else:
+        for i in astarpath:
+            done_map[i[0]][i[1]] = 4
+        print(done_map)
 
 

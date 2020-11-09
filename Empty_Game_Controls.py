@@ -16,7 +16,7 @@ from math import sin, cos, sqrt, atan2, isclose, pi
 import sys
 import Agent as agent
 
-import pathplan as plan
+import Pathplan as plan
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--showgrid",help="represent game map as a grid such as 4x4", action='store_true')
@@ -199,9 +199,8 @@ if __name__=='__main__':
             Quit()
         
         robot.run_step() 
-        
         HandleHmiMovementKeyPress(keys_pressed, robot.pos,showgrid)
-                
+                    
         #it gets covered by the 2-D visibility
         # a is rectangle, b is circle for position
         b = display(robot,showgrid)
