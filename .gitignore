@@ -19,3 +19,9 @@ ipython_config.py
 
 # pyenv
 .python-version
+
+# pygame assets
+SpaceShooterRedux
+
+# tutorials and demos from the interwebs
+demos
