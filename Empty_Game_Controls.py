@@ -24,69 +24,6 @@ args = parser.parse_args()
 
 showgrid = args.showgrid
 
-'''
-Change settings; set vars based on args
-'''
-gamemap = np.ones(GRID_DIMS)
-costmap = np.zeros(GRID_DIMS)
-horizontal_block_step = WIDTH // GRID_DIMS[0]
-vertical_block_step = HEIGHT // GRID_DIMS[1]
-
-W = 0 
-S = 1
-G = 2
-F = 3
-
-TileColor = { W : BLUE,
-              S : SANDYYELLOW,
-              G : GRASSGREEN,
-              F : FORESTGREEN
-             }
-
-TILESIZE = 40
-tilemap = np.random.random( GRID_DIMS )
-colorChoice = [W,S,G,F,W]
-multiplier_prob = 1 / len(colorChoice)
-for i,v in enumerate(colorChoice):
-    tilemap= np.where( (tilemap< ( multiplier_prob * (i+1))), colorChoice[i],tilemap)
-#print(tilemap)
-
-#initialize pygame modules
-pygame.init()
-pygame.font.init()
-
-FPSCLOCK = pygame.time.Clock()
-font = pygame.font.SysFont('arial', 20)
-hitsurf = font.render("Hit!!! Oops!!", 1, (255,255,255))
-
-
-button = pygame.Rect(int(.1*WIDTH),int(.8*HEIGHT),200,50)
-
-screen = None
-if showgrid:
-    screen = pygame.display.set_mode(SIZE)
-else:
-    WIDTH = GRID_DIMS[0]*TILESIZE  
-    HEIGHT = GRID_DIMS[1]*TILESIZE  
-    screen = pygame.display.set_mode((WIDTH,HEIGHT))
-title = "Control, then switch controllers via argparse"
-pygame.display.set_caption(title)
-
-
-if showgrid:
-    horizontal_block_step = WIDTH // GRID_DIMS[0]
-    vertical_block_step = HEIGHT // GRID_DIMS[1]
-    #vx,vy = horizontal_block_step, vertical_block_step
-    horiz_half_step, vert_half_step = int(horizontal_block_step * .5), int(vertical_block_step * .5)
-elif not showgrid:
-    print("not showgrid")
-    horizontal_block_step = (GRID_DIMS[0] * TILESIZE) // GRID_DIMS[0]
-    vertical_block_step = (GRID_DIMS[1] * TILESIZE) // GRID_DIMS[1]
-    #vx,vy = horizontal_block_step, vertical_block_step
-    horiz_half_step, vert_half_step = int(horizontal_block_step * .5), int(vertical_block_step * .5)
-else:
-    # keeping a simple debug setting
-    vx,vy = 5,5
 def Quit():
     pygame.display.quit()
     pygame.quit()
@@ -178,18 +115,71 @@ def HandleHmiMovementKeyPress(keys_pressed, pos,showgrid):
 
 if __name__=='__main__':
    
+    '''
+    Settings; set vars based on args
+    '''
+    gamemap = np.ones(GRID_DIMS)
+    costmap = np.zeros(GRID_DIMS)
+    horizontal_block_step = WIDTH // GRID_DIMS[0]
+    vertical_block_step = HEIGHT // GRID_DIMS[1]
+
+    W = 0 
+    S = 1
+    G = 2
+    F = 3
+    TileColor = { W : BLUE,
+                  S : SANDYYELLOW,
+                  G : GRASSGREEN,
+                  F : FORESTGREEN
+                 }
+
+    TILESIZE = 40
+    tilemap = np.random.random( GRID_DIMS )
+    colorChoice = [W,S,G,F,W]
+    multiplier_prob = 1 / len(colorChoice)
+    for i,v in enumerate(colorChoice):
+        tilemap= np.where( (tilemap< ( multiplier_prob * (i+1))), colorChoice[i],tilemap)
+
+    #initialize pygame modules
+    pygame.init()
+    pygame.font.init()
+
+    FPSCLOCK = pygame.time.Clock()
+    font = pygame.font.SysFont('arial', 20)
+    hitsurf = font.render("Hit!!! Oops!!", 1, (255,255,255))
+
+    button = pygame.Rect(int(.1*WIDTH),int(.8*HEIGHT),200,50)
+
+    screen = None
+    if showgrid:
+        screen = pygame.display.set_mode(SIZE)
+    else:
+        WIDTH = GRID_DIMS[0]*TILESIZE  
+        HEIGHT = GRID_DIMS[1]*TILESIZE  
+        screen = pygame.display.set_mode((WIDTH,HEIGHT))
+    title = "Control, then switch controllers via argparse"
+    pygame.display.set_caption(title)
+
+    if showgrid:
+        horizontal_block_step = WIDTH // GRID_DIMS[0]
+        vertical_block_step = HEIGHT // GRID_DIMS[1]
+        #vx,vy = horizontal_block_step, vertical_block_step
+        horiz_half_step, vert_half_step = int(horizontal_block_step * .5), int(vertical_block_step * .5)
+    elif not showgrid:
+        print("not showgrid")
+        horizontal_block_step = (GRID_DIMS[0] * TILESIZE) // GRID_DIMS[0]
+        vertical_block_step = (GRID_DIMS[1] * TILESIZE) // GRID_DIMS[1]
+        #vx,vy = horizontal_block_step, vertical_block_step
+        horiz_half_step, vert_half_step = int(horizontal_block_step * .5), int(vertical_block_step * .5)
+    else:
+        # keeping a simple debug setting
+        vx,vy = 5,5
+    
     #default velocity, more often than not it's number of graph fields per key press
     vx, vy = 1, 1
     robot = agent.Agent(np.array([0,0]),{},gamemap)
-    goalpt = np.array([8,4])
+    goalpt = np.array([8,8])
     checkpath,moves = plan.generatePathToGoalPt(gamemap,robot.pos,goalpt)
-    moves.insert(0,[1,0])
-    moves.insert(0,[1,0])
-    moves.insert(0,[1,0])
-    moves.insert(0,[1,0])
-    moves.insert(0,[1,0])
-    moves.insert(0,[1,0])
-    moves.insert(0,[1,0])
     robot.setPath(checkpath,moves)
     
     while True:
@@ -202,6 +192,7 @@ if __name__=='__main__':
             elif event.type == MOUSEBUTTONDOWN:
                 mousepos = event.pos
                 if button.collidepoint(mousepos):
+                    # we can change vars governing display here
                     print("collided")
         keys_pressed = pygame.key.get_pressed()
         if keys_pressed[K_ESCAPE]:
