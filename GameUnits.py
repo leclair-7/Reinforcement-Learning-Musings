@@ -70,7 +70,7 @@ class Bullet(pygame.sprite.Sprite):
  
         self.rect = self.image.get_rect()
         
-        self.velocity = 3
+        self.velocity = 5
         self.yaw = angle + 90
         self.mask = pygame.mask.from_surface(self.image)
     def update(self):
